@@ -1,0 +1,1 @@
+Game Library Manager API using FastAPI, enabling users to register and manage their game collections.
