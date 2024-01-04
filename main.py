@@ -1,4 +1,6 @@
+import os
 from typing import Annotated
+from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -15,13 +17,20 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+load_dotenv()
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:password@localhost/gl_man_db"
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+POSTGRES_SERVER = os.getenv("POSTGRES_SERVER")
+
+SQLALCHEMY_DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DB}"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base.metadata.create_all(bind=engine)
+
 
 @app.get("/")
 async def root():
@@ -54,6 +63,7 @@ class Game(BaseModel):
 
     class Config:
         orm_mode = True
+
 
 @app.post("/token")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
@@ -89,7 +99,8 @@ async def check_user_access(scopes: list = Depends(get_user_scopes)):
 
 
 # @app.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game)
-@app.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game,  dependencies=[Depends(check_user_access)])
+@app.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game,
+          dependencies=[Depends(check_user_access)])
 async def create_game(game: Game, db: Session = Depends(get_db)):
     new_game = models.Game(
         title=game.title,
