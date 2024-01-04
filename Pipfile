@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pip_conf_index_global"
+
+[packages]
+fastapi = "0.108.0"
+uvicorn = {extras = ["standard"], version = "*"}
+psycopg2 = "2.9.9"
+SQLAlchemy = "2.0.23"
+pytest = "7.4.3"
+python-multipart = "*"
+
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
+python_full_version = "3.12.1"
