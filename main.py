@@ -1,35 +1,18 @@
-import os
 from typing import Annotated
-from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
 import models
 from auth import fake_users_db, fake_hash_password, UserInDB, User, get_current_active_user
-from models import Base
+from database import get_db
+from registration import router as registration_router
 
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 app = FastAPI()
-
-load_dotenv()
-
-POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-POSTGRES_DB = os.getenv("POSTGRES_DB")
-POSTGRES_SERVER = os.getenv("POSTGRES_SERVER")
-
-SQLALCHEMY_DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DB}"
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base.metadata.create_all(bind=engine)
+app.include_router(registration_router)
 
 
 @app.get("/")
@@ -40,15 +23,6 @@ async def root():
 @app.get("/hello/{name}")
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
-
-
-# Dependency to get the database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 # Pydantic model for game data input

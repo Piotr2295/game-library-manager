@@ -1,8 +1,11 @@
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from database import get_db
 
 fake_users_db = {
     "user1": {
@@ -42,8 +45,7 @@ def get_user(db, username: str):
 
 
 def fake_decode_token(token):
-    # This doesn't provide any security at all
-    # Check the next version
+    # This doesn't provide any security at all (yet)
     user = get_user(fake_users_db, token)
     return user
 
@@ -65,3 +67,7 @@ async def get_current_active_user(
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+def get_user_by_username(username: str, db: Session = Depends(get_db)):
+    return db.query(User).filter(User.username == username).first()
