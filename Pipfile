@@ -8,9 +8,13 @@ fastapi = "0.108.0"
 uvicorn = {extras = ["standard"], version = "*"}
 psycopg2 = "2.9.9"
 SQLAlchemy = "2.0.23"
-pytest = "7.4.3"
-python-multipart = "*"
-
+pytest = "7.4.4"
+python-multipart = "0.0.6"
+python-jose = "3.3.0"
+cryptography = "41.0.7"
+passlib = "*"
+bcrypt = "*"
+alembic = "*"
 
 [dev-packages]
 

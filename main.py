@@ -1,10 +1,9 @@
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Depends, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import FastAPI, HTTPException, Depends, status, Security
 
 import models
-from auth import fake_users_db, fake_hash_password, UserInDB, User, get_current_active_user
+from auth import User, get_current_active_user, router as login_router
 from database import get_db
 from registration import router as registration_router
 
@@ -13,6 +12,7 @@ from pydantic import BaseModel
 
 app = FastAPI()
 app.include_router(registration_router)
+app.include_router(login_router)
 
 
 @app.get("/")
@@ -39,43 +39,12 @@ class Game(BaseModel):
         orm_mode = True
 
 
-@app.post("/token")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    user_dict = fake_users_db.get(form_data.username)
-    if not user_dict:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user = UserInDB(**user_dict)
-    hashed_password = fake_hash_password(form_data.password)
-    if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-
-    return {"access_token": user.username, "token_type": "bearer"}
-
-
-@app.get("/users/me")
-async def read_users_me(
-        current_user: Annotated[User, Depends(get_current_active_user)]
+@app.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game)
+async def create_game(
+        game: Game,
+        current_user: Annotated[User, Security(get_current_active_user, scopes=["write"])],
+        db: Session = Depends(get_db)
 ):
-    return current_user
-
-
-# Dependency to get the current user's scopes
-async def get_user_scopes(current_user: Annotated[User, Depends(get_current_active_user)]):
-    return current_user.scopes
-
-
-# User access control based on scopes
-async def check_user_access(scopes: list = Depends(get_user_scopes)):
-    required_scopes = ["write"]  # Specify required scopes for specific endpoints
-    for scope in required_scopes:
-        if scope not in scopes:
-            raise HTTPException(status_code=401, detail="Insufficient scope")
-
-
-# @app.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game)
-@app.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game,
-          dependencies=[Depends(check_user_access)])
-async def create_game(game: Game, db: Session = Depends(get_db)):
     new_game = models.Game(
         title=game.title,
         platform=game.platform,
