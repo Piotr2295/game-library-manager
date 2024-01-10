@@ -3,9 +3,9 @@ from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
-import models
-from auth import hash_password
-from database import get_db
+from ..internal import models
+from ..routers.auth import hash_password
+from ..internal.database import get_db
 
 router = APIRouter()
 

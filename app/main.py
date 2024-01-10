@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from auth import router as login_router
-from registration import router as registration_router
-from games import router as games_router
+from app.routers.auth import router as login_router
+from app.routers.registration import router as registration_router
+from app.routers.games import router as games_router
 
 
 app = FastAPI()

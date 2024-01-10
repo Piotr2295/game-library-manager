@@ -5,9 +5,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
 
-import models
-from auth import User, get_current_active_user
-from database import get_db
+from ..internal import models
+from ..routers.auth import User, get_current_active_user
+from ..internal.database import get_db
 
 router = APIRouter()
 
@@ -29,7 +29,6 @@ class Game(BaseModel):
 @router.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game)
 async def create_game(
         game: Game,
-        current_user: Annotated[User, Security(get_current_active_user, scopes=["write"])],
         db: Session = Depends(get_db)
 ):
     new_game = models.Game(
@@ -80,7 +79,10 @@ async def update_game(game_id: int, game: Game, db: Session = Depends(get_db)):
 
 # Delete a game by ID
 @router.delete("/games/{game_id}", response_model=Game)
-async def delete_game(game_id: int, db: Session = Depends(get_db)):
+async def delete_game(
+        game_id: int,
+        current_user: Annotated[User, Security(get_current_active_user, scopes=["delete"])],
+        db: Session = Depends(get_db)):
     game = db.query(models.Game).filter(models.Game.id == game_id).first()
     if game is None:
         raise HTTPException(status_code=404, detail="Game not found")

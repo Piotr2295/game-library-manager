@@ -10,8 +10,8 @@ from pydantic import BaseModel, ValidationError
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
-import models
-from database import get_db
+from app.internal import models
+from app.internal.database import get_db
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
@@ -46,7 +46,7 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="token",
     scopes={"me": "Read information about the current user.",
             "items": "Read items.",
-            "write": "Create a game."
+            "delete": "Delete a game."
             },
 )
 
