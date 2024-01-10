@@ -19,6 +19,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
 router = APIRouter()
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str

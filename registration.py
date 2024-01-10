@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -30,7 +28,6 @@ async def register_user(user: User, db: Session = Depends(get_db)):
     hashed_password = hash_password(user.password)
     new_user = models.User(username=user.username, email=user.email, hashed_password=hashed_password)
     new_user.set_scope(user.scopes)
-    print(new_user)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
