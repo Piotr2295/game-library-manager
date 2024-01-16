@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import Column, Integer, String, Text, Enum, JSON, BOOLEAN
+from sqlalchemy import Column, Integer, String, Text, JSON, BOOLEAN
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
