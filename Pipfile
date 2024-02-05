@@ -12,11 +12,11 @@ pytest = "7.4.4"
 python-multipart = "0.0.6"
 python-jose = "3.3.0"
 cryptography = "41.0.7"
-passlib = "*"
-bcrypt = "*"
-alembic = "*"
-httpx = "*"
-setuptools = "*"
+passlib = "1.7.4"
+bcrypt = "4.1.2"
+alembic = "1.13.1"
+httpx = "0.26.0"
+setuptools = "69.0.2"
 
 
 [dev-packages]
