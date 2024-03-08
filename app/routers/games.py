@@ -1,48 +1,20 @@
 from typing import Annotated
-
-from fastapi import FastAPI, HTTPException, Depends, status, Security
-
-import models
-from auth import User, get_current_active_user, router as login_router
-from database import get_db
-from registration import router as registration_router
+from fastapi import APIRouter, Depends, HTTPException, Security
 
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from starlette import status
 
-app = FastAPI()
-app.include_router(registration_router)
-app.include_router(login_router)
+from internal.pydantic_models import Game
+from ..internal import models
+from ..routers.auth import User, get_current_active_user
+from ..internal.database import get_db
 
-
-@app.get("/")
-async def root():
-    return {"message": "Welcome to your game library!"}
+router = APIRouter()
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
-
-
-# Pydantic model for game data input
-class Game(BaseModel):
-    id: int
-    title: str
-    platform: str
-    genre: str
-    cover_image: str = None
-    screenshots: str = None
-    video_links: str = None
-
-    class Config:
-        orm_mode = True
-
-
-@app.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game)
+@router.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game)
 async def create_game(
         game: Game,
-        current_user: Annotated[User, Security(get_current_active_user, scopes=["write"])],
         db: Session = Depends(get_db)
 ):
     new_game = models.Game(
@@ -64,13 +36,13 @@ async def create_game(
 
 
 # Retrieve all games
-@app.get("/games/", response_model=list[Game])
+@router.get("/games/", response_model=list[Game])
 async def get_games(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return db.query(models.Game).offset(skip).limit(limit).all()
 
 
 # Retrieve a single game by ID
-@app.get("/games/{game_id}", response_model=Game)
+@router.get("/games/{game_id}", response_model=Game)
 async def get_game(game_id: int, db: Session = Depends(get_db)):
     game = db.query(models.Game).filter(models.Game.id == game_id).first()
     if game is None:
@@ -79,7 +51,7 @@ async def get_game(game_id: int, db: Session = Depends(get_db)):
 
 
 # Update a game by ID
-@app.put("/games/{game_id}", response_model=Game)
+@router.put("/games/{game_id}", response_model=Game)
 async def update_game(game_id: int, game: Game, db: Session = Depends(get_db)):
     db_game = db.query(models.Game).filter(models.Game.id == game_id).first()
     if db_game is None:
@@ -92,8 +64,11 @@ async def update_game(game_id: int, game: Game, db: Session = Depends(get_db)):
 
 
 # Delete a game by ID
-@app.delete("/games/{game_id}", response_model=Game)
-async def delete_game(game_id: int, db: Session = Depends(get_db)):
+@router.delete("/games/{game_id}", response_model=Game)
+async def delete_game(
+        game_id: int,
+        current_user: Annotated[User, Security(get_current_active_user, scopes=["delete"])],
+        db: Session = Depends(get_db)):
     game = db.query(models.Game).filter(models.Game.id == game_id).first()
     if game is None:
         raise HTTPException(status_code=404, detail="Game not found")

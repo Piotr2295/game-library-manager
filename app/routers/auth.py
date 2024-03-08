@@ -6,12 +6,13 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, APIRouter, Security, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
 from jose import jwt, JWTError
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
-import models
-from database import get_db
+from app.internal import models
+from app.internal.database import get_db
+from internal.pydantic_models import UserInDB, TokenData, User, Token
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
@@ -19,33 +20,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
 router = APIRouter()
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
-    scopes: list[str] = []
-
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    scopes: list[str]
-    disabled: bool
-
-
-class UserInDB(User):
-    hashed_password: str
-
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="token",
     scopes={"me": "Read information about the current user.",
             "items": "Read items.",
-            "write": "Create a game."
+            "delete": "Delete a game."
             },
 )
 
@@ -98,7 +78,14 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": authenticate_value},
     )
-    jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    try:
+        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Signature has expired. Please login again",
+            headers={"WWW-Authenticate": authenticate_value},
+        )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
