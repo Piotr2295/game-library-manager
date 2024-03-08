@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
+from internal.pydantic_models import RegistrationUser
 from ..internal import models
 from ..routers.auth import hash_password
 from ..internal.database import get_db
@@ -10,17 +10,8 @@ from ..internal.database import get_db
 router = APIRouter()
 
 
-class User(BaseModel):
-    id: int
-    username: str
-    email: str
-    password: str
-    scopes: list[str]
-    disabled: bool
-
-
 @router.post("/register/", status_code=201)
-async def register_user(user: User, db: Session = Depends(get_db)):
+async def register_user(user: RegistrationUser, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")

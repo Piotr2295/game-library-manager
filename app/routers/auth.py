@@ -6,40 +6,19 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, APIRouter, Security, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
 from jose import jwt, JWTError
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
 from app.internal import models
 from app.internal.database import get_db
+from internal.pydantic_models import UserInDB, TokenData, User, Token
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
 router = APIRouter()
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
-    scopes: list[str] = []
-
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    scopes: list[str]
-    disabled: bool
-
-
-class UserInDB(User):
-    hashed_password: str
-
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(

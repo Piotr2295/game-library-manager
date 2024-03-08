@@ -1,29 +1,15 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Security
-from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 from starlette import status
 
+from internal.pydantic_models import Game
 from ..internal import models
 from ..routers.auth import User, get_current_active_user
 from ..internal.database import get_db
 
 router = APIRouter()
-
-
-# Pydantic model for game data input
-class Game(BaseModel):
-    id: int
-    title: str
-    platform: str
-    genre: str
-    cover_image: str = None
-    screenshots: str = None
-    video_links: str = None
-
-    class Config:
-        orm_mode = True
 
 
 @router.post("/games/", status_code=status.HTTP_201_CREATED, response_model=Game)
